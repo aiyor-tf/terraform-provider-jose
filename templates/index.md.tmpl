@@ -1,0 +1,38 @@
+---
+page_title: "Provider: JOSE"
+description: |-
+  he JOSE provider aims to provide utilities to manage and interact with JSON Object Signing and Encryption (JOSE) operations.
+---
+
+# {{ .ProviderShortName | upper }} Provider
+
+The {{ .ProviderShortName | upper }} provider aims to provide utilities to manage and interact with JSON Object Signing and Encryption (JOSE) operations. Currently, the provider's resources can do the following operations,
+* JSON Web Key (JWK) and JSON Web Key Set (JWKS):
+    * `jose_jwk`: Generate a JWK with customizable parameters, such as key ID, Usage.
+    * `jose_jwks`: Generate a JWKS containing multiple JWKs, ideal for managing key sets.
+    * `jose_jwt_sign`: Creates a JWT that can be signed by supported private keys (RSA, ECDSA, and ECDSA).
+
+
+
+## Compatibility
+
+Compatibility table between this provider, the [Terraform Plugin Protocol](https://www.terraform.io/plugin/how-terraform-works#terraform-plugin-protocol)
+version it implements, and Terraform:
+
+| JOSE Provider | Terraform Plugin Protocol | Terraform |
+|:-------------:|:-------------------------:|:---------:|
+|   `>= 0.x`    |            `6.0`          | `>= 1.0`  |
+|   `>= 1.x`    |            `6.0`          | `>= 1.0`  |
+
+
+This provider plugin is developed based on the [Terraform Plugin Framework](https://developer.hashicorp.com/terraform/plugin/framework).
+
+
+## Requirements
+
+- [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
+
+
+## Example Usage
+
+{{ tffile "examples/resources/jwk/resource.tf" }}

@@ -1,0 +1,77 @@
+# This Docker Compose file is used for quick and dirty test during the development of the plugin.
+services:
+  terraform:
+    image: tzeliang/tfdev:tf1.8.4-go1.22.3
+    environment:
+      - GOBIN=/go/bin
+    entrypoint: ""
+    volumes:
+      - .:/work 
+    working_dir: /work
+  gendoc:
+    image: tzeliang/tfdev:tf1.8.4-go1.22.3
+    environment:
+      - GOBIN=/go/bin
+    entrypoint: ""
+    volumes:
+      - .:/work 
+    working_dir: /work
+    command:
+      - /bin/sh
+      - -c
+      - |
+        go generate .   
+  test-jwk:
+    image: tzeliang/tfdev:tf1.8.4-go1.22.3
+    environment:
+      - GOBIN=/go/bin
+    entrypoint: ""
+    volumes:
+      - .:/work 
+    working_dir: /work
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cp terraformrc ~/.terraformrc
+        go install .
+        cd examples/resources/jwk
+        terraform plan
+        terraform apply -auto-approve
+        rm terraform.tfstate
+  test-jwks:
+    image: tzeliang/tfdev:tf1.8.4-go1.22.3
+    environment:
+      - GOBIN=/go/bin
+    entrypoint: ""
+    volumes:
+      - .:/work 
+    working_dir: /work
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cp terraformrc ~/.terraformrc
+        go install .
+        cd examples/resources/jwks
+        terraform plan
+        terraform apply -auto-approve
+        rm terraform.tfstate
+  test-jwt-sign:
+    image: tzeliang/tfdev:tf1.8.4-go1.22.3
+    environment:
+      - GOBIN=/go/bin
+    entrypoint: ""
+    volumes:
+      - .:/work 
+    working_dir: /work
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cp terraformrc ~/.terraformrc
+        go install .
+        cd examples/resources/jwt_sign
+        terraform plan
+        terraform apply -auto-approve
+        rm terraform.tfstate

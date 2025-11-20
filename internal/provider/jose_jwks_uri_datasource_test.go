@@ -16,7 +16,7 @@ func TestAccJoseJwksUriDataSource(t *testing.T) {
 	// Mock JWKS Server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"keys": [{"kty": "RSA", "kid": "test-kid", "use": "sig", "alg": "RS256", "n": "test-n", "e": "AQAB"}]}`))
+		_, _ = w.Write([]byte(`{"keys": [{"kty": "RSA", "kid": "test-kid", "use": "sig", "alg": "RS256", "n": "test-n", "e": "AQAB"}]}`))
 	}))
 	defer server.Close()
 

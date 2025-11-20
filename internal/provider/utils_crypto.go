@@ -128,28 +128,44 @@ func generateKey(alg string, size int) (interface{}, interface{}, error) {
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to generate RSA key: %w", err)
 		}
-		pubKey = &privKey.(*rsa.PrivateKey).PublicKey
+		rsaKey, ok := privKey.(*rsa.PrivateKey)
+		if !ok {
+			return nil, nil, fmt.Errorf("failed to assert RSA private key")
+		}
+		pubKey = &rsaKey.PublicKey
 
 	case "ES256":
 		privKey, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to generate ECDSA P-256 key: %w", err)
 		}
-		pubKey = &privKey.(*ecdsa.PrivateKey).PublicKey
+		ecKey, ok := privKey.(*ecdsa.PrivateKey)
+		if !ok {
+			return nil, nil, fmt.Errorf("failed to assert ECDSA private key")
+		}
+		pubKey = &ecKey.PublicKey
 
 	case "ES384":
 		privKey, err = ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to generate ECDSA P-384 key: %w", err)
 		}
-		pubKey = &privKey.(*ecdsa.PrivateKey).PublicKey
+		ecKey, ok := privKey.(*ecdsa.PrivateKey)
+		if !ok {
+			return nil, nil, fmt.Errorf("failed to assert ECDSA private key")
+		}
+		pubKey = &ecKey.PublicKey
 
 	case "ES512":
 		privKey, err = ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to generate ECDSA P-521 key: %w", err)
 		}
-		pubKey = &privKey.(*ecdsa.PrivateKey).PublicKey
+		ecKey, ok := privKey.(*ecdsa.PrivateKey)
+		if !ok {
+			return nil, nil, fmt.Errorf("failed to assert ECDSA private key")
+		}
+		pubKey = &ecKey.PublicKey
 
 	case "EdDSA":
 		pub, priv, err := ed25519.GenerateKey(rand.Reader)
@@ -194,6 +210,8 @@ func buildJWK(key interface{}, alg, kid, use string) (*jose.JSONWebKey, error) {
 			}
 		case ed25519.PublicKey:
 			jwk.Algorithm = "EdDSA"
+		default:
+			return nil, fmt.Errorf("unsupported key type for JWK building")
 		}
 	}
 

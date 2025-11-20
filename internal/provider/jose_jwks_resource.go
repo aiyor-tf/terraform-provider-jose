@@ -101,7 +101,7 @@ func (r *joseJwksResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	//for _, item := range data.JWKSProperties {}
-	for _, item := range data.JWKSProperties {
+	for i, item := range data.JWKSProperties {
 		pubKey, err := parsePublicKey(item.PublicKey.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Invalid public key in JWKS", err.Error())
@@ -122,6 +122,13 @@ func (r *joseJwksResource) Create(ctx context.Context, req resource.CreateReques
 
 		// Append the raw JSON to the JWKSet.Keys
 		jwkSet.Keys = append(jwkSet.Keys, jwkJSON)
+
+		// Update computed attributes
+		item.JWK = types.StringValue(string(jwkJSON))
+		item.JWKBase64 = types.StringValue(base64.StdEncoding.EncodeToString(jwkJSON))
+		item.ID = types.StringValue(uuid.NewString())
+
+		data.JWKSProperties[i] = item
 	}
 
 	// Marshal the JWKSet to JSON

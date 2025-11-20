@@ -7,9 +7,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
-	"errors"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -94,33 +91,4 @@ func (k *EdDSAPrivateKey) sign(claims jwt.Claims, kid string) (string, error) {
 	token.Header["kid"] = kid
 
 	return token.SignedString(k.PrivateKey)
-}
-
-func parsePrivateKey(key []byte, alg types.String) (PrivateKey, error) {
-	var privateKey PrivateKey
-
-	// Parse PEM type
-	block, _ := pem.Decode(key)
-	if block == nil {
-		return nil, errors.New("failed to parse PEM block containing the key")
-	}
-
-	// Attempt to assign the correct supported key type.
-	// Currently only supports RSA, ECDSA, and EdDSA types.
-	if pKey, err := x509.ParsePKCS1PrivateKey(block.Bytes); err == nil {
-		privateKey = &RSAPrivateKey{pKey, alg}
-	} else if pKey, err := x509.ParseECPrivateKey(block.Bytes); err == nil {
-		privateKey = &ECDSAPrivateKey{pKey}
-	} else if pKey, err := x509.ParsePKCS8PrivateKey(block.Bytes); err == nil {
-		ed25519Key, ok := pKey.(ed25519.PrivateKey) // Type assertion
-		if !ok {
-			return nil, errors.New("error type assertion: ed25519.PrivateKey")
-		} else {
-			privateKey = &EdDSAPrivateKey{ed25519Key}
-		}
-	} else {
-		return nil, errors.New("unsupported private key type")
-	}
-
-	return privateKey, nil
 }

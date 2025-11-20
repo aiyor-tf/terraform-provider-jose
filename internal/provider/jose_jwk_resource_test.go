@@ -29,6 +29,7 @@ func TestAccJoseJwkResource(t *testing.T) {
 				`,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("jose_jwk.test", "jwk_b64", strings.TrimSpace(fixtures.B64JWKRSA)),
+					resource.TestCheckResourceAttrSet("jose_jwk.test", "id"),
 				),
 			},
 			// Update and Read testing

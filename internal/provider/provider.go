@@ -54,10 +54,16 @@ func (p *joseProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewJoseJwkResource,
 		NewJoseJwksResource,
 		NewJoseJwtSignResource,
+		NewJoseJweResource,
+		NewJoseKeyResource,
 	}
 }
 
 // DataSources defines the data sources implemented in the provider.
 func (p *joseProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return nil
+	return []func() datasource.DataSource{
+		NewJoseJwtVerifyDataSource,
+		NewJoseJwkToPemDataSource,
+		NewJoseJwksUriDataSource,
+	}
 }

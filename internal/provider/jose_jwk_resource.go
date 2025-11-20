@@ -8,7 +8,7 @@ import (
 	"context"
 	"encoding/base64"
 
-	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -26,12 +26,13 @@ type joseJwkResourceModel struct {
 	Use       types.String `tfsdk:"use"`
 	JWK       types.String `tfsdk:"jwk"`
 	JWKBase64 types.String `tfsdk:"jwk_b64"`
+	ID        types.String `tfsdk:"id"`
 }
 
 // Ensure provider defined types fully satisfy framework interfaces.
 var (
-	_ resource.Resource                = &joseJwkResource{}
-	_ resource.ResourceWithImportState = &joseJwkResource{}
+	_ resource.Resource = &joseJwkResource{}
+	_ resource.Resource = &joseJwkResource{}
 )
 
 func NewJoseJwkResource() resource.Resource {
@@ -63,9 +64,21 @@ func (r *joseJwkResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	jwkJSON, err := createJWK(data)
+	pubKey, err := parsePublicKey(data.PublicKey.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating JWK", err.Error())
+		resp.Diagnostics.AddError("Invalid public key", err.Error())
+		return
+	}
+
+	jwk, err := buildJWK(pubKey, data.Alg.ValueString(), data.KID.ValueString(), data.Use.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Error building JWK", err.Error())
+		return
+	}
+
+	jwkJSON, err := jwk.MarshalJSON()
+	if err != nil {
+		resp.Diagnostics.AddError("Error marshaling JWK", err.Error())
 		return
 	}
 
@@ -73,6 +86,8 @@ func (r *joseJwkResource) Create(ctx context.Context, req resource.CreateRequest
 
 	// Save jwkJSON as data.JWKBase64 encoded in Base64
 	data.JWKBase64 = types.StringValue(base64.StdEncoding.EncodeToString(jwkJSON))
+
+	data.ID = types.StringValue(uuid.NewString())
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -118,8 +133,4 @@ func (r *joseJwkResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-}
-
-func (r *joseJwkResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("jwk"), req, resp)
 }

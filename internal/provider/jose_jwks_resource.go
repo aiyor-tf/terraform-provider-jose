@@ -9,9 +9,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
-	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -24,6 +26,7 @@ type joseJwksResourceModel struct {
 	JWKSProperties []joseJwkResourceModel `tfsdk:"jwks_properties"`
 	JWKS           types.String           `tfsdk:"jwks"`
 	JWKSBase64     types.String           `tfsdk:"jwks_b64"`
+	ID             types.String           `tfsdk:"id"`
 }
 
 // type joseJwksModel struct {
@@ -38,8 +41,8 @@ type JWKSet struct {
 
 // Ensure provider defined types fully satisfy framework interfaces.
 var (
-	_ resource.Resource                = &joseJwksResource{}
-	_ resource.ResourceWithImportState = &joseJwksResource{}
+	_ resource.Resource = &joseJwksResource{}
+	_ resource.Resource = &joseJwksResource{}
 )
 
 func NewJoseJwksResource() resource.Resource {
@@ -70,6 +73,12 @@ func (r *joseJwksResource) Schema(ctx context.Context, req resource.SchemaReques
 				Computed:    true,
 				Description: "The resulting JWK Set encoded in base64.",
 			},
+			"id": schema.StringAttribute{
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 		},
 	}
 }
@@ -93,10 +102,21 @@ func (r *joseJwksResource) Create(ctx context.Context, req resource.CreateReques
 
 	//for _, item := range data.JWKSProperties {}
 	for _, item := range data.JWKSProperties {
-		jwkJSON, err := createJWK(item)
-
+		pubKey, err := parsePublicKey(item.PublicKey.ValueString())
 		if err != nil {
-			resp.Diagnostics.AddError("Error creating JWK:", err.Error())
+			resp.Diagnostics.AddError("Invalid public key in JWKS", err.Error())
+			return
+		}
+
+		jwk, err := buildJWK(pubKey, item.Alg.ValueString(), item.KID.ValueString(), item.Use.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("Error building JWK for JWKS", err.Error())
+			return
+		}
+
+		jwkJSON, err := jwk.MarshalJSON()
+		if err != nil {
+			resp.Diagnostics.AddError("Error marshaling JWK for JWKS", err.Error())
 			return
 		}
 
@@ -116,6 +136,8 @@ func (r *joseJwksResource) Create(ctx context.Context, req resource.CreateReques
 
 	// Save jwkJSON as data.JWKBase64 encoded in Base64
 	data.JWKSBase64 = types.StringValue(base64.StdEncoding.EncodeToString(jwkSetJSON))
+
+	data.ID = types.StringValue(uuid.NewString())
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -160,8 +182,4 @@ func (r *joseJwksResource) Delete(ctx context.Context, req resource.DeleteReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
-}
-
-func (r *joseJwksResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("jwks"), req, resp)
 }

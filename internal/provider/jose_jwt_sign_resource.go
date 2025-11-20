@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -18,8 +18,8 @@ import (
 
 // Ensure provider defined types fully satisfy framework interfaces.
 var (
-	_ resource.Resource                = &joseJwtSignResource{}
-	_ resource.ResourceWithImportState = &joseJwtSignResource{}
+	_ resource.Resource = &joseJwtSignResource{}
+	_ resource.Resource = &joseJwtSignResource{}
 )
 
 func NewJoseJwtSignResource() resource.Resource {
@@ -36,6 +36,7 @@ type joseJwtSignResourceModel struct {
 	KID        types.String `tfsdk:"kid"`
 	ClaimsJSON types.String `tfsdk:"claims_json"`
 	JWT        types.String `tfsdk:"jwt"`
+	ID         types.String `tfsdk:"id"`
 }
 
 func (r *joseJwtSignResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -89,6 +90,7 @@ func (r *joseJwtSignResource) Create(ctx context.Context, req resource.CreateReq
 	// For the purposes of this example code, hardcoding a response value to
 	// save into the Terraform state.
 	data.JWT = types.StringValue(token)
+	data.ID = types.StringValue(uuid.NewString())
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -143,8 +145,4 @@ func (r *joseJwtSignResource) Delete(ctx context.Context, req resource.DeleteReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
-}
-
-func (r *joseJwtSignResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("jwt"), req, resp)
 }

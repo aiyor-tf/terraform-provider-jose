@@ -1,5 +1,10 @@
 default: testacc
 
+# Build and install the provider to GOBIN
+.PHONY: install
+install:
+	go install .
+
 # Run acceptance tests
 .PHONY: testacc
 testacc:

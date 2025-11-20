@@ -58,7 +58,7 @@ func (r *joseJwksResource) Schema(ctx context.Context, req resource.SchemaReques
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Create a JWK Set.",
 		Attributes: map[string]schema.Attribute{
-			"jwks_properties": schema.SetNestedAttribute{
+			"jwks_properties": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: jwkSchema,
 				},

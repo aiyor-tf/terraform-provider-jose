@@ -137,6 +137,7 @@ var (
 			},
 		},
 		"size": schema.Int64Attribute{
+			Computed:            true,
 			Optional:            true,
 			MarkdownDescription: "Key size in bits (only for RSA). Default is 2048.",
 			PlanModifiers: []planmodifier.Int64{
